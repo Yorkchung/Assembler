@@ -96,15 +96,17 @@ public class Assembler{
             if(arr.length<2||arr.length>4){
                 System.out.printf("程式應由Label、mmnemonic跟operand組成");
                 return true;
-            }else if(arr[0].equals("END")&&arr.length==2){
+            }else if((arr[0].equals("END")&&arr.length==2)||(arr[1].equals("END")&&arr.length==3)){
+                String l = arr.length==2?arr[1]:arr[2];//判斷END前面是否有label
+                if(arr.length==3)if(storeLabel(arr[0])==true)return true;//存Label
                 storeObject("E");
                 end = Integer.toHexString(address);
                 address = address - Integer.valueOf(start,16);
-                if(sym.search(arr[1])=="false"){
-                    System.out.print(arr[1]+": 沒有此Label");
+                if(sym.search(l)=="false"){
+                    System.out.print(l+": 沒有此Label");
                     return true;
                 }
-                storeObject(addZero(sym.search(arr[1]),6));
+                storeObject(addZero(sym.search(l),6));
                 objectCode.set(3,addZero(Integer.toHexString(address).toUpperCase(),6));
             }else if(arr[0].equals("END")||arr[0].equals("START")){
                 System.out.print(arr[0]+": 不能當成label");
@@ -134,7 +136,11 @@ public class Assembler{
                 newLine = true;
                 start = arr[2];
             }else{
-                if(arr[1].equals("RESB")&&arr.length==3){
+                //判斷directives後面不能加其他東西
+                if((arr[1].equals("BYTE")||arr[1].equals("WORD")||arr[1].equals("RESB")||arr[1].equals("RESW"))&&arr.length>3){
+                    System.out.print(arr[1]+"後面只能有data");
+                    return true;
+                }else if(arr[1].equals("RESB")&&arr.length==3){
                     if(storeLabel(arr[0])==true)return true;//存Label
                     if(!arr[2].matches("[0-9]+")){
                         System.out.print(arr[2]+": 請使用10進位制");
@@ -170,7 +176,7 @@ public class Assembler{
                         }else if(arr[2].length()==3){
                             System.out.print("X裡面不可為空值");
                             return true;    
-                        }else if(!arr[2].substring(arr[2].indexOf('\'')+1,arr[2].length()-1).matches("[A-Za-z0-9]+")){
+                        }else if(!arr[2].substring(arr[2].indexOf('\'')+1,arr[2].length()-1).matches("[A-Fa-f0-9]+")){
                             System.out.print(arr[2]+": 請使用16進位制");
                             return true;
                         }
@@ -192,19 +198,7 @@ public class Assembler{
                 }else if(op.search(arr[1])!="false"){//是mnemonic，且非RSUB
                     if(storeLabel(arr[0])==true)return true;//存Label
                     if(!arr[1].equals("RSUB")){
-                        if(arr.length==4&&arr[arr.length-1].equals("X"))//是索引定址
-                            //判斷是否有找到label
-                            storeObject(op.search(arr[1])+(isLabelExit(arr[2],address)?indexedObject(arr[2]):"0000"));
-                        else if(arr.length==3&&!arr[arr.length-1].equals("X"))//是直接定址
-                            //判斷是否有找到label
-                            storeObject(op.search(arr[1])+(isLabelExit(arr[2],address)?sym.search(arr[2]):"0000"));
-                        else if(op.search(arr[arr.length-1])!="false"){
-                            System.out.print(arr[arr.length-1]+": operand不能跟mnemonic同名");
-                            return true;
-                        }else{
-                            System.out.print(arr[arr.length-1]+": indexed錯誤，請用X作為索引");
-                            return true;
-                        }
+                        if(directOrIndexed(arr,1)==true)return true;//判斷是索引定址或直接定址
                     }else if(arr[1].equals("RSUB")&&arr.length>2){
                         System.out.print("RSUB後面不能有operand");
                         return true;
@@ -212,29 +206,17 @@ public class Assembler{
                     address += 3;
                 }else{//都不符合，程式錯誤
                     if(storeLabel(arr[0])==true)return true;//存Label
-                    System.out.printf("opCode錯誤");
+                    System.out.printf("mnemonic或directive錯誤");
                     return true;
                 }
             }
         }else{//第一個是mnemonic
             if(arr.length<4&&arr.length>1&&!arr[0].equals("RSUB")){//判斷非RSUB的Mnemonic
                 if((!op.search(arr[1]).equals("false"))||arr[1].equals("BYTE")||arr[1].equals("WORD")||arr[1].equals("RESB")||arr[1].equals("RESW")){//第二個也是mnemonic
-                    System.out.print(arr[0]+": 不能取跟mnemonic相同名稱");
+                    System.out.print(arr[0]+": 不能取跟mnemonic或assembler directives相同名稱");
                     return true;
                 }
-                if(arr.length==3&&arr[arr.length-1].equals("X"))//是索引定址
-                    //判斷是否有找到label
-                    storeObject(op.search(arr[0])+(isLabelExit(arr[1],address)?indexedObject(arr[1]):"0000"));
-                else if(arr.length==2&&!arr[arr.length-1].equals("X"))//是直接定址
-                    //判斷是否有找到label
-                    storeObject(op.search(arr[0])+(isLabelExit(arr[1],address)?sym.search(arr[1]):"0000"));
-                else if(op.search(arr[arr.length-1])!="false"){
-                    System.out.print(arr[arr.length-1]+": operand不能跟mnemonic同名");
-                    return true;
-                }else{
-                    System.out.print(arr[arr.length-1]+": indexed錯誤，請用X作為索引");
-                    return true;
-                }
+                if(directOrIndexed(arr,0)==true)return true;//判斷是索引定址或直接定址
             }else if(arr.length==1&&arr[0].equals("RSUB")){
                 storeObject("4C0000");
             }else if(arr[0].equals("RSUB")){
@@ -247,6 +229,22 @@ public class Assembler{
             address += 3;
         }
         return false;
+    }
+    public boolean directOrIndexed(String[] arr,int hasLabel){//判斷是索引定址或直接定址
+        if(arr.length==(hasLabel+3)&&arr[arr.length-1].equals("X"))//是索引定址
+            //判斷是否有找到label
+            storeObject(op.search(arr[hasLabel])+(isLabelExit(arr[hasLabel+1],address)?indexedObject(arr[hasLabel+1]):"0000"));
+        else if(arr.length==(hasLabel+2)&&!arr[arr.length-1].equals("X"))//是直接定址
+            //判斷是否有找到label
+            storeObject(op.search(arr[hasLabel])+(isLabelExit(arr[hasLabel+1],address)?sym.search(arr[hasLabel+1]):"0000"));
+        else if(op.search(arr[arr.length-1])!="false"){
+            System.out.print(arr[arr.length-1]+": operand不能跟mnemonic同名");
+            return true;
+        }else{
+            System.out.print(arr[arr.length-1]+": indexed錯誤，請用X作為索引");
+            return true;
+       }
+       return false;
     }
     //位置是否超過FFFF
     public boolean overMemory(int location){
@@ -359,6 +357,7 @@ public class Assembler{
                 System.out.println();
             System.out.print(objectCode.get(i)+" ");
         }
+        System.out.println();
     }
     public static void main(String[] argv)throws IOException{
         Assembler as = new Assembler();
