@@ -11,13 +11,14 @@ public class Assembler{
     ArrayList<String> objectCode;
     ArrayList<String> wrongLabel = new ArrayList<String>();//使用還未宣告的Label行號
     private int address;//Location
-    final int object_Length = 10;//objectProgram長度
-    private int line;//現在此行已多少objectCode
+    final int object_Length = 10;//objectProgram每行個數
+    private int thisLine;//現在此行已多少objectCode
     private boolean newLine = false;//判斷是否新增為一行新的
     private int lineHead;//現在這一行在ArrayList是第幾個
     private String start = "0";//起始位置
     private String end;//結束位置
     private int j = 0;//現在執行行數
+    private int endline = 0;//結束行號
     public Assembler()throws IOException{
         op = new HashTable("opCode.txt",1000,"mnemonic","opCode");//讀入opCode
         objectCode = new ArrayList<String>();
@@ -30,7 +31,6 @@ public class Assembler{
         boolean currentWrong = false;//現在這一行是否有錯
         int wrong = 0;//全部讀完有多少錯
         for(j=1;(line=br.readLine())!=null;j++){//一直讀，直到讀到檔案最後
-            //System.out.printf("%d:%s\n",j,line);
             line = line.replaceAll("[\\.].*$","");//刪除註解
             line = line.trim();//刪除前後空白
             if(line.trim().length()<=0)//忽略空白行
@@ -47,18 +47,19 @@ public class Assembler{
                 System.out.println("不可有特殊字元"+"......第"+j+"行");
                 wrong++;
             }
-            String[] arr = line.split("[\\s]+");//用空白分割
+            String[] arr = line.split("[^a-zA-Z0-9*]+");//英數以外的字元切割TOKEN
             for(int i=0;i<arr.length;i++){
                 if(arr[i].equals("*"))
                     arr[i] = CX;//將C'...'及X'...'存回去
             }
-            if(j==2&&start=="0"){
+            if((objectCode.size()!=0||newLine==true)&&start=="0"){
                 System.out.print("請先定義START");
                 System.out.println("......第"+(j-1)+"行");
+                start = "-1";
                 wrong++;
             }else if(end!=null){
                 System.out.print("END不能在程式中間");
-                System.out.println("......第"+(j-1)+"行");
+                System.out.println("......第"+endline+"行");
                 wrong++;
                 end = null;
             }else if(address-Integer.parseInt("FFFF",16)>0){
@@ -74,7 +75,7 @@ public class Assembler{
             }
         }
         if(end==null){
-            System.out.println("請定義END");
+            System.out.println("請定義END......第"+j+"行");
             wrong++;
         }
         for(int j=0;j<wrongLabel.size()/2;j++){
@@ -97,6 +98,7 @@ public class Assembler{
                 System.out.printf("程式應由Label、mmnemonic跟operand組成");
                 return true;
             }else if((arr[0].equals("END")&&arr.length==2)||(arr[1].equals("END")&&arr.length==3)){
+                endline = j;//紀錄end結束行號
                 String l = arr.length==2?arr[1]:arr[2];//判斷END前面是否有label
                 if(arr.length==3)if(storeLabel(arr[0])==true)return true;//存Label
                 storeObject("E");
@@ -132,7 +134,7 @@ public class Assembler{
                     return true;
                 }
                 address = Integer.parseInt(arr[2],16);//16進位轉10進位，字串轉整數
-                storeObject("H");storeObject(arr[1]);storeObject("00"+arr[2]);storeObject("000000");
+                storeObject("H");storeObject(arr[0]);storeObject("00"+arr[2]);storeObject("000000");
                 newLine = true;
                 start = arr[2];
             }else{
@@ -188,12 +190,13 @@ public class Assembler{
                         }
                         address += (arr[2].length()-3)/2;
                     }else if(arr[2].charAt(0)=='C'&&arr[2].length()>2){//還是C'..'
+                        if(arr[2].length()==3){
+                            System.out.print("C裡面不可為空值");
+                            return true;    
+                        }
                         int s = arr[2].indexOf('\'')+1;
                         storeObject(stringToASCII(arr[2].substring(s,arr[2].length()-1)));
                         address += arr[2].length()-s-1;
-                    }else{
-                        System.out.println("請用C''或X''");
-                        return true;
                     }
                 }else if(op.search(arr[1])!="false"){//是mnemonic，且非RSUB
                     if(storeLabel(arr[0])==true)return true;//存Label
@@ -206,7 +209,7 @@ public class Assembler{
                     address += 3;
                 }else{//都不符合，程式錯誤
                     if(storeLabel(arr[0])==true)return true;//存Label
-                    System.out.printf("mnemonic或directive錯誤");
+                    System.out.printf(arr[1]+": mnemonic或directive錯誤");
                     return true;
                 }
             }
@@ -267,7 +270,7 @@ public class Assembler{
     //找到operand定義的label
     public boolean findLabel(String a){
         if(sym.search(a).equals("****")){
-            this.line = 0;
+            this.thisLine = 0;
             while(true){
                 String location = sym.searchNoLabel(a,Integer.toHexString(address));
                 if(location==null)
@@ -309,13 +312,12 @@ public class Assembler{
     }
     //存objectCode
     public void storeObject(String object){
-        this.line++;
-        int sum = 0;
-        if(this.line==10||newLine == true){
+        this.thisLine++;
+        if(this.thisLine==object_Length||newLine == true){
             objectCode.add("T");
             objectCode.add(addZero(Integer.toHexString(address),6).toUpperCase());//10進位轉16進位
             objectCode.add("00");
-            this.line = 0;
+            this.thisLine = 0;
             this.newLine = false;
         }
         objectCode.add(object.toUpperCase());
@@ -323,9 +325,9 @@ public class Assembler{
     //計算每行長度
     public void countLength(){
         for(int i=0;i<objectCode.size();i++){
-            if(objectCode.get(i)=="T"||objectCode.get(i)=="E"){
+            if(objectCode.get(i)=="T"||objectCode.get(i)=="E"){//讀到T或E算前一行的長度
                 int sum = 0;
-                if(i!=4){
+                if(i!=4){//第一行不用算
                     for(int j=lineHead+1;j<i;j++)
                         sum += objectCode.get(j).length();
                     objectCode.set(lineHead,addZero(Integer.toHexString(sum/2),2).toUpperCase());
@@ -355,12 +357,12 @@ public class Assembler{
         for(int i=0;i<objectCode.size();i++){
             if(objectCode.get(i)=="T"||objectCode.get(i)=="E")
                 System.out.println();
-            System.out.print(objectCode.get(i)+" ");
+            System.out.print(" "+objectCode.get(i));
         }
         System.out.println();
     }
     public static void main(String[] argv)throws IOException{
         Assembler as = new Assembler();
-        as.read("one.txt");
+        as.read("code.s");
     }
 }
