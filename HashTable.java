@@ -7,8 +7,8 @@ public class HashTable{
     private int n;
     private String mnOrLabel;
     private String opOrAddress;
-    private int ptr;//ä½œç‚ºæŸ¥è©¢ä½å®šç¾©locationçš„æŒ‡æ¨™
-    public class Table{//å…§éƒ¨é¡åˆ¥ï¼Œå­˜Table
+    private int ptr;//§@¬°¬d¸ß¦ì©w¸qlocationªº«ü¼Ğ
+    public class Table{//¤º³¡Ãş§O¡A¦sTable
         public String input;//mnemonic or label
         public String output;//opCode or address
         public Table next;
@@ -20,9 +20,9 @@ public class HashTable{
             noLabel = null;
         }
     }
-    public class NoLabel{//å…§éƒ¨é¡åˆ¥ï¼Œå­˜éœ€é‡æ–°å®šå€çš„Address
-        public String address;
-        public int length;
+    public class NoLabel{//¤º³¡Ãş§O¡A¦s»İ­«·s©w§}ªºAddress
+        public String address;//­n­×§ïªº¦ì¸m
+        public int length;//ªø«×
         public NoLabel next;
         public NoLabel(){
             address = "";
@@ -30,82 +30,83 @@ public class HashTable{
             next = null;
         }
     }
-    public HashTable(int l,String a,String b){//é•·åº¦ã€å­—ä¸²AB
+    public HashTable(int l,String a,String b){//ªø«×¡B¦r¦êAB
         this.n = l;
         this.mnOrLabel=a;this.opOrAddress=b;
         t = new Table[n];
         for(int i=0;i<n;i++)
             t[i] = new Table();
     }
-    public HashTable(String txt,int l,String a,String b)throws IOException{//æª”æ¡ˆã€é•·åº¦ã€å­—ä¸²AB
+    public HashTable(String txt,int l,String a,String b)throws IOException{//ÀÉ®×¡Bªø«×¡B¦r¦êAB
         this(l,a,b);
         FileReader fr = new FileReader(txt);
         BufferedReader br = new BufferedReader(fr);
         String line;
-        //è®€å…¥txtï¼Œåˆ†å‰²ä¸¦ä¸Ÿå…¥insert
+        //Åª¤Jtxt¡A¤À³Î¨Ã¥á¤Jinsert
         while((line=br.readLine())!=null){
             String[] arr = line.split(" ");
             insert(arr[0],arr[1]);
         }
+        fr.close();
     }
     //Hash function
     public int hash(String a){
         int b =0;
-        //å–ASCII code å¹³æ–¹å’Œ mode100
+        //¨úASCII code ¥­¤è©M mode°}¦Cªø«×
         for(int i=0;i<a.length();i++)
             b += (int)Math.pow(a.charAt(i),2);
         return  b%n;
     }
-    //å°‡inputåŠoutputå­˜å…¥Table
-    public boolean insert(String a,String b){//å›å‚³æ˜¯å¦å„²å­˜æˆåŠŸ
+    //±Ninput¤Îoutput¦s¤JTable
+    public boolean insert(String a,String b){//¦^¶Ç¬O§_Àx¦s¦¨¥\
         b = b.toUpperCase();
-        int tmp = hash(a); //ä½å€
-        //åˆ¤æ–·æ˜¯å¦ç¢°æ’
+        int tmp = hash(a); //¦ì§}
+        //§PÂ_¬O§_¸I¼²
         if(!t[tmp].input.equals("")){
             Table current = t[tmp];
             do{
-                //åˆ¤æ–·åŒä¸€å€‹ä½å€çš„inputåŠoutputæ˜¯å¦ä¸€æ¨£
+                //§PÂ_¦P¤@­Ó¦ì§}ªºinput¤Îoutput¬O§_¤@¼Ë
                 if(current.input.equals(a)){
-                    System.out.print(a+": æ­¤"+mnOrLabel+"å·²å­˜åœ¨");
+                    System.out.print(a+": ¦¹"+mnOrLabel+"¤w¦s¦b");
                     return false;
                 }
                 if(current.output.equals(b)){
-                    System.out.print(b+": æ­¤"+opOrAddress+"å·²å­˜åœ¨");
+                    System.out.print(b+": ¦¹"+opOrAddress+"¤w¦s¦b");
                     return false;
                 }
-                //æ‰¾æœ€å¾Œä¸€å€‹
+                //§ä³Ì«á¤@­Ó
                 if(current.next!=null){
                     current = current.next;
                     continue;
                 }
-                //ä¸²æ¥åˆ°æœ€å¾Œä¸€å€‹å¾Œé¢
-                current.next = new Table();//ä¸²æ¥æ–°çš„ç‰©ä»¶
-                current.next.output = b;//å­˜output
-                current.next.input = a;//å­˜input
+                //¦ê±µ¨ì³Ì«á¤@­Ó«á­±
+                current.next = new Table();//¦ê±µ·sªºª«¥ó
+                current.next.output = b;//¦soutput
+                current.next.input = a;//¦sinput
                 break;
             }while(true);
         }
         else{
-            t[tmp].output = b;//å­˜output
-            t[tmp].input = a;//å­˜input
+            t[tmp].output = b;//¦soutput
+            t[tmp].input = a;//¦sinput
         }
         return true;
     }
-    //æœå°‹å‡ºå°æ‡‰output
+    //·j´M¥X¹ïÀ³output
     public String search(String a){
         int c = hash(a);
         Table s = t[c];
-        //å¾€å¾Œæ‰¾ï¼Œç›´åˆ°æ‰¾åˆ°ç›¸åŒinputæˆ–éƒ½æ‰¾ä¸åˆ°
+        //©¹«á§ä¡Aª½¨ì§ä¨ì¬Û¦Pinput©Î³£§ä¤£¨ì
         while(!s.input.equals(a)){
-            if(s.next==null)//æ‰¾åˆ°æœ€å¾Œéƒ½æ²’æœ‰
+            if(s.next==null)//§ä¨ì³Ì«á³£¨S¦³
                 return "false";
-            else//å¾€å¾Œæ‰¾
+            else//©¹«á§ä
                 s = s.next;
         }
-        return s.output;//inputä¸€æ¨£
+        return s.output;//input¤@¼Ë
     }
     public void tPrint(){
-        System.out.println("é™£åˆ—ä½å€\t"+mnOrLabel+"\t  "+opOrAddress);
+        System.out.println("°}¦C¦ì§}\t"+mnOrLabel+"\t  "+opOrAddress);
         for(int i=0;i<t.length;i++){
             if(t[i].input!="")
                 System.out.println(i+"\t\t"+t[i].input+"\t\t"+t[i].output);
@@ -113,52 +114,51 @@ public class HashTable{
                 Table s = t[i];
                 while(s.next!=null){
                     s = s.next;
-                    System.out.println(i+"ä¸²åˆ—\t\t"+s.input+"\t\t"+s.output);
+                    System.out.println(i+"¦ê¦C\t\t"+s.input+"\t\t"+s.output);
                 }
             }
         }
     }
-    //å¦‚æœæ²’æœ‰Labelï¼Œå­˜è¦ä¿®æ”¹çš„ä½ç½®
-    public void storeLabel(String a,String address){//Labelã€address
+    //¦pªG¨S¦³Label¡A¦s­n­×§ïªº¦ì¸m
+    public void storeLabel(String a,String address){//Label¡Baddress
         int c = hash(a);
         Table s = t[c];
-        while(!s.input.equals(a))//å¾€å¾Œæ‰¾åˆ°å°æ‡‰çš„Label
+        while(!s.input.equals(a))//©¹«á§ä¨ì¹ïÀ³ªºLabel
             s = s.next;
         int i=0;
         while(true){
             NoLabel no = s.noLabel;
-            if(s.noLabel==null){//ç¬¬ä¸€å€‹
+            if(s.noLabel==null){//²Ä¤@­Ó
                 s.noLabel = new NoLabel();
                 no = s.noLabel;
-            }else if(!no.address.equals(address)){//æ‰¾åˆ°æœ€å¾Œä¸€å€‹ä½ç½®ï¼Œå­˜è¦ä¿®æ”¹çš„address
-                if(no.next!=null){
+            }else if(!no.address.equals(address)){//§ä¨ì³Ì«á¤@­Ó¦ì¸m¡A¦s­n­×§ïªºaddress
+                while(no.next!=null){
                     no = no.next;
-                    continue;
                 }
                 no.next = new NoLabel();
                 no = no.next;
             }else{
-                System.out.println("æ­¤è¡Œå·²è®€é");
+                System.out.println("¦¹¦æ¤wÅª¹L");
                 break;
             }   
-            no.address = address;//è¦ä¿®æ”¹çš„ä½ç½®
-            no.length = address.length();//è¦ä¿®æ”¹çš„é•·åº¦
+            no.address = address;//­n­×§ïªº¦ì¸m
+            no.length = address.length();//­n­×§ïªºªø«×
             break;
         }
     }
-    //æœå°‹noLabel
-    public String searchNoLabel(String a,String address){//Labelã€ç¾åœ¨ä½å€
+    //·j´MnoLabel
+    public String searchNoLabel(String a,String address){//Label¡B²{¦b¦ì§}
         int c = hash(a);
         Table s = t[c];
-        while(!s.input.equals(a))//å¾€å¾Œæ‰¾åˆ°å°æ‡‰çš„Label
+        while(!s.input.equals(a))//©¹«á§ä¨ì¹ïÀ³ªºLabel
             s = s.next;
         s.output = address;
         NoLabel no = s.noLabel;
-        if(ptr==0){//ç¬¬ä¸€å€‹
+        if(ptr==0){//²Ä¤@­Ó
             ptr++;
             return s.noLabel.address;
         }
-        for(int i=0;i<ptr;i++){//æŒ‡æ¨™å¾€ä¸‹æ‰¾
+        for(int i=0;i<ptr;i++){//«ü¼Ğ©¹¤U§ä
             if(no.next==null){
                 ptr = 0;
                 return null;
@@ -171,18 +171,18 @@ public class HashTable{
     public static void main(String[] argv){
         Scanner sc = new Scanner(System.in);
         HashTable h = new HashTable(1024,"label","address");
-        String a,b;int i = 0;//aæ˜¯labelï¼Œbæ˜¯address
+        String a,b;int i = 0;//a¬Olabel¡Ab¬Oaddress
         System.out.print(++i+"  ");
         while(!(a=sc.next()).equals(".")){
             b=sc.next();
             h.insert(a,b);
             System.out.print(++i+"  ");
         }
-        h.tPrint();//å°å‡º
-        System.out.print("è«‹è¼¸å…¥æŸ¥è©¢: ");
+        h.tPrint();//¦L¥X
+        System.out.print("½Ğ¿é¤J¬d¸ß: ");
         while(!(a=sc.next()).equals(".")){
             System.out.println(h.search(a));
-            System.out.print("è«‹è¼¸å…¥æŸ¥è©¢: ");
+            System.out.print("½Ğ¿é¤J¬d¸ß: ");
         }
     }
 }

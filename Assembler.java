@@ -1,87 +1,85 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 public class Assembler{
-    HashTable op;//è®€å…¥opCode
+    HashTable op;//Åª¤JopCode
     HashTable sym = new HashTable(1024,"label","address");
     ArrayList<String> objectCode;
-    ArrayList<String> wrongLabel = new ArrayList<String>();//ä½¿ç”¨é‚„æœªå®£å‘Šçš„Labelè¡Œè™Ÿ
-    private int address;//Location
-    final int object_Length = 10;//objectProgramæ¯è¡Œå€‹æ•¸
-    private int thisLine;//ç¾åœ¨æ­¤è¡Œå·²å¤šå°‘objectCode
-    private boolean newLine = false;//åˆ¤æ–·æ˜¯å¦æ–°å¢ç‚ºä¸€è¡Œæ–°çš„
-    private int lineHead;//ç¾åœ¨é€™ä¸€è¡Œåœ¨ArrayListæ˜¯ç¬¬å¹¾å€‹
-    private String start = "0";//èµ·å§‹ä½ç½®
-    private String end;//çµæŸä½ç½®
-    private int j = 0;//ç¾åœ¨åŸ·è¡Œè¡Œæ•¸
-    private int endline = 0;//çµæŸè¡Œè™Ÿ
+    ArrayList<String> wrongLabel = new ArrayList<String>();//¨Ï¥ÎÁÙ¥¼«Å§iªºLabel¦æ¸¹
+    private int address;//°O¾ĞÅé¦ì¸m
+    final int object_Length = 10;//objectProgram¨C¦æ­Ó¼Æ
+    private int thisLine;//²{¦b¦¹¦æ¤w¦h¤ÖobjectCode
+    private boolean newLine = false;//§PÂ_¬O§_·s¼W¬°¤@¦æ·sªº
+    private int lineHead;//²{¦b³o¤@¦æ¦bArrayList¬O²Ä´X­Ó
+    private String start = "0";//°_©l¦ì¸m
+    private String end;//µ²§ô¦ì¸m
+    private int j = 0;//²{¦b°õ¦æ¦æ¼Æ
+    private int endline = 0;//µ²§ô¦æ¸¹
     public Assembler()throws IOException{
-        op = new HashTable("opCode.txt",1000,"mnemonic","opCode");//è®€å…¥opCode
+        op = new HashTable("opCode.txt",1000,"mnemonic","opCode");//Åª¤JopCode
         objectCode = new ArrayList<String>();
     }
-    //è®€å…¥çµ„åˆèªè¨€
+    //Åª¤J²Õ¦X»y¨¥
     public void read(String data)throws IOException{
         FileReader fr = new FileReader(data);
         BufferedReader br = new BufferedReader(fr);
         String line;
-        boolean currentWrong = false;//ç¾åœ¨é€™ä¸€è¡Œæ˜¯å¦æœ‰éŒ¯
-        int wrong = 0;//å…¨éƒ¨è®€å®Œæœ‰å¤šå°‘éŒ¯
-        for(j=1;(line=br.readLine())!=null;j++){//ä¸€ç›´è®€ï¼Œç›´åˆ°è®€åˆ°æª”æ¡ˆæœ€å¾Œ
-            line = line.replaceAll("[\\.].*$","");//åˆªé™¤è¨»è§£
-            line = line.trim();//åˆªé™¤å‰å¾Œç©ºç™½
-            if(line.trim().length()<=0)//å¿½ç•¥ç©ºç™½è¡Œ
+        boolean currentWrong = false;//²{¦b³o¤@¦æ¬O§_¦³¿ù
+        int wrong = 0;//¥ş³¡Åª§¹¦³¦h¤Ö¿ù
+        for(j=1;(line=br.readLine())!=null;j++){//¤@ª½Åª¡Aª½¨ìÅª¨ìÀÉ®×³Ì«á
+            line = line.replaceAll("[\\.].*$","");//§R°£µù¸Ñ
+            line = line.trim();//§R°£«e«áªÅ¥Õ
+            if(line.trim().length()<=0)//©¿²¤ªÅ¥Õ¦æ
                 continue;
-            String CX = "";//æš«æ™‚å­˜æ”¾C'...'åŠX'...'
+            String CX = "";//¼È®É¦s©ñC'...'¤ÎX'...'
             Pattern pattern = Pattern.compile("[CX].*\'.*\'");
             Matcher matcher = pattern.matcher(line);
             while(matcher.find()){
                 CX = matcher.group();
-                line = line.replace(CX,"*");//å…ˆå°‡C'...'åŠX'...'å–ä»£æˆ*
+                line = line.replace(CX,"*");//¥ı±NC'...'¤ÎX'...'¨ú¥N¦¨*
             }
-            line = line.replaceAll(",\\s*X"," X");//å°‡,Xå–ä»£ç‚ºX
-            if(!pattern.compile("^[A-Za-z0-9\\s\\*]+$").matcher(line).find()){//åˆ¤æ–·æ˜¯å¦æœ‰ç‰¹æ®Šå­—å…ƒ
-                System.out.println("ä¸å¯æœ‰ç‰¹æ®Šå­—å…ƒ"+"......ç¬¬"+j+"è¡Œ");
+            line = line.replaceAll(",\\s*X"," X");//±N,X¨ú¥N¬°X
+            if(!pattern.compile("^[A-Za-z0-9\\s\\*]+$").matcher(line).find()){//§PÂ_¬O§_¦³¯S®í¦r¤¸
+                System.out.println("¤£¥i¦³¯S®í¦r¤¸"+"......²Ä"+j+"¦æ");
                 wrong++;
             }
-            String[] arr = line.split("[^a-zA-Z0-9*]+");//è‹±æ•¸ä»¥å¤–çš„å­—å…ƒåˆ‡å‰²TOKEN
+            String[] arr = line.split("[^a-zA-Z0-9*]+");//­^¼Æ¥H¥~ªº¦r¤¸¤Á³ÎTOKEN
             for(int i=0;i<arr.length;i++){
                 if(arr[i].equals("*"))
-                    arr[i] = CX;//å°‡C'...'åŠX'...'å­˜å›å»
+                    arr[i] = CX;//±NC'...'¤ÎX'...'¦s¦^¥h
             }
             if((objectCode.size()!=0||newLine==true)&&start=="0"){
-                System.out.print("è«‹å…ˆå®šç¾©START");
-                System.out.println("......ç¬¬"+(j-1)+"è¡Œ");
+                System.out.print("½Ğ¥ı©w¸qSTART");
+                System.out.println("......²Ä"+(j-1)+"¦æ");
                 start = "-1";
                 wrong++;
             }else if(end!=null){
-                System.out.print("ENDä¸èƒ½åœ¨ç¨‹å¼ä¸­é–“");
-                System.out.println("......ç¬¬"+endline+"è¡Œ");
+                System.out.print("END¤£¯à¦bµ{¦¡¤¤¶¡");
+                System.out.println("......²Ä"+endline+"¦æ");
                 wrong++;
                 end = null;
             }else if(address-Integer.parseInt("FFFF",16)>0){
-                System.out.println(Integer.toHexString(address).toUpperCase()+": è¶…å‡ºè¨˜æ†¶é«”å¤§å°......ç¬¬"+j+"è¡Œ");
+                System.out.println(Integer.toHexString(address).toUpperCase()+": ¶W¥X°O¾ĞÅé¤j¤p......²Ä"+j+"¦æ");
                 wrong++;
                 end = "";
                 break;
             }
-            if((currentWrong=this.putSym(arr))==true){//æœ‰éŒ¯èª¤è¨Šæ¯
+            if((currentWrong=this.putSym(arr))==true){//¦³¿ù»~°T®§
                 if(currentWrong==true)
                     wrong++;
-                System.out.println("......ç¬¬"+j+"è¡Œ");
+                System.out.println("......²Ä"+j+"¦æ");
             }
         }
         if(end==null){
-            System.out.println("è«‹å®šç¾©END......ç¬¬"+j+"è¡Œ");
+            System.out.println("½Ğ©w¸qEND......²Ä"+j+"¦æ");
             wrong++;
         }
         for(int j=0;j<wrongLabel.size()/2;j++){
             if(wrongLabel.get(2*j)!=""){
-                System.out.print(wrongLabel.get(2*j)+": æœªå®šç¾©çš„Label");
-                System.out.println("......ç¬¬"+wrongLabel.get(2*j+1)+"è¡Œ");
+                System.out.print(wrongLabel.get(2*j)+": ¥¼©w¸qªºLabel");
+                System.out.println("......²Ä"+wrongLabel.get(2*j+1)+"¦æ");
                 wrong++;
             }
         }
@@ -89,185 +87,195 @@ public class Assembler{
         if(wrong==0)
             printObjectCode();
         else
-            System.out.println("\nç¸½å…±æœ‰"+wrong+"å€‹éŒ¯");
+            System.out.println("\nÁ`¦@¦³"+wrong+"­Ó¿ù");
     }
-    //å­˜é€²SymbolTablã€ç®—å‡ºobjectCode
+    //¦s¶iSymbolTabl¡Bºâ¥XobjectCode
     public boolean putSym(String[] arr){
-        if(op.search(arr[0])=="false"){//ç¬¬ä¸€å€‹ä¸æ˜¯mnemonic
+        if(op.search(arr[0])=="false"){//²Ä¤@­Ó¤£¬Omnemonic
             if(arr.length<2||arr.length>4){
-                System.out.printf("ç¨‹å¼æ‡‰ç”±Labelã€mmnemonicè·Ÿoperandçµ„æˆ");
+                System.out.printf("µ{¦¡À³¥ÑLabel¡Bmmnemonic¸òoperand²Õ¦¨");
                 return true;
             }else if((arr[0].equals("END")&&arr.length==2)||(arr[1].equals("END")&&arr.length==3)){
-                endline = j;//ç´€éŒ„endçµæŸè¡Œè™Ÿ
-                String l = arr.length==2?arr[1]:arr[2];//åˆ¤æ–·ENDå‰é¢æ˜¯å¦æœ‰label
-                if(arr.length==3)if(storeLabel(arr[0])==true)return true;//å­˜Label
+                endline = j;//¬ö¿ıendµ²§ô¦æ¸¹
+                String l = arr.length==2?arr[1]:arr[2];//§PÂ_END«á­±¬O§_¦³label
+                if(arr.length==3)if(storeLabel(arr[0])==true)return true;//¦sLabel
                 storeObject("E");
+                newLine = false;
+                this.thisLine = 0;
                 end = Integer.toHexString(address);
                 address = address - Integer.valueOf(start,16);
                 if(sym.search(l)=="false"){
-                    System.out.print(l+": æ²’æœ‰æ­¤Label");
+                    System.out.print(l+": ¨S¦³¦¹Label");
                     return true;
                 }
                 storeObject(addZero(sym.search(l),6));
                 objectCode.set(3,addZero(Integer.toHexString(address).toUpperCase(),6));
             }else if(arr[0].equals("END")||arr[0].equals("START")){
-                System.out.print(arr[0]+": ä¸èƒ½ç•¶æˆlabel");
+                System.out.print(arr[0]+": ¤£¯à·í¦¨label");
                 return true;
             }else if(arr[0].equals("BYTE")||arr[0].equals("WORD")||arr[0].equals("RESB")||arr[0].equals("RESW")){
-                System.out.print(arr[0]+"å‰é¢éœ€æœ‰Label");
+                System.out.print(arr[0]+"«e­±»İ¦³Label");
                 return true;
             }else if(arr[1].equals("START")){
                 if(start!="0"){
-                    System.out.print("STARTä¸èƒ½åœ¨ç¨‹å¼ä¸­é–“");
+                    System.out.print("START¤£¯à¦bµ{¦¡¤¤¶¡");
                     return true;
                 }else if(arr.length!=3){
-                    System.out.print(arr.length<3?"STARTå¾Œé¢æ‡‰å®šç¾©èµ·å§‹ä½ç½®":"STARTå¾Œé¢åªèƒ½æœ‰èµ·å§‹ä½ç½®");
+                    System.out.print(arr.length<3?"START«á­±À³©w¸q°_©l¦ì¸m":"START«á­±¥u¯à¦³°_©l¦ì¸m");
                     return true;
-                }else if(storeLabel(arr[0])==true)return true;//å­˜Label
+                }else if(storeLabel(arr[0])==true)return true;//¦sLabel
                 else if(!arr[2].matches("[A-Fa-f0-9]+")){
-                    System.out.print(arr[2]+": è«‹ä½¿ç”¨16é€²ä½åˆ¶");
+                    System.out.print(arr[2]+": ½Ğ¨Ï¥Î16¶i¦ì¨î");
                     start = "1";
                     return true;
                 }else if(arr[2].compareTo("FFFF")>0){
                     start = "1";
-                    System.out.print(arr[2]+": èµ·å§‹ä½ç½®è¶…éè¨˜æ†¶é«”å¤§å°");
+                    System.out.print(arr[2]+": °_©l¦ì¸m¶W¹L°O¾ĞÅé¤j¤p");
                     return true;
                 }
-                address = Integer.parseInt(arr[2],16);//16é€²ä½è½‰10é€²ä½ï¼Œå­—ä¸²è½‰æ•´æ•¸
-                storeObject("H");storeObject(arr[0]);storeObject("00"+arr[2]);storeObject("000000");
+                address = Integer.parseInt(arr[2],16);//16¶i¦ìÂà10¶i¦ì¡A¦r¦êÂà¾ã¼Æ
+                storeObject("H");
+                while(arr[0].length()<6){//¸ÉªÅ¥Õ
+                    StringBuffer sb = new StringBuffer();
+                    sb.append(arr[0]).append(" ");
+                    arr[0] = sb.toString();
+                }
+                storeObject(arr[0]);
+                storeObject("00"+arr[2]);storeObject("000000");
                 newLine = true;
                 start = arr[2];
             }else{
-                //åˆ¤æ–·directiveså¾Œé¢ä¸èƒ½åŠ å…¶ä»–æ±è¥¿
+                //§PÂ_directives«á­±¤£¯à¥[¨ä¥LªF¦è
                 if((arr[1].equals("BYTE")||arr[1].equals("WORD")||arr[1].equals("RESB")||arr[1].equals("RESW"))&&arr.length>3){
-                    System.out.print(arr[1]+"å¾Œé¢åªèƒ½æœ‰data");
+                    System.out.print(arr[1]+"«á­±¥u¯à¦³data");
                     return true;
                 }else if(arr[1].equals("RESB")&&arr.length==3){
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
                     if(!arr[2].matches("[0-9]+")){
-                        System.out.print(arr[2]+": è«‹ä½¿ç”¨10é€²ä½åˆ¶");
+                        System.out.print(arr[2]+": ½Ğ¨Ï¥Î10¶i¦ì¨î");
                         return true;
                     }
                     newLine = true;
-                    address += Integer.parseInt(arr[2]);//å­—ä¸²è½‰æ•´æ•¸
+                    address += Integer.parseInt(arr[2]);//¦r¦êÂà¾ã¼Æ
                 }else if(arr[1].equals("RESW")&&arr.length==3){
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
                     if(!arr[2].matches("[0-9]+")){
-                        System.out.print(arr[2]+": è«‹ä½¿ç”¨10é€²ä½åˆ¶");
+                        System.out.print(arr[2]+": ½Ğ¨Ï¥Î10¶i¦ì¨î");
                         return true;
                     }
                     newLine = true;
-                    address += 3*Integer.valueOf(arr[2]);//å­—ä¸²è½‰æ•´æ•¸
+                    address += 3*Integer.valueOf(arr[2]);//¦r¦êÂà¾ã¼Æ
                 }else if(arr[1].equals("WORD")&&arr.length==3){
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
                     if(!arr[2].matches("[0-9]+")){
-                        System.out.print(arr[2]+": è«‹ä½¿ç”¨10é€²ä½åˆ¶");
+                        System.out.print(arr[2]+": ½Ğ¨Ï¥Î10¶i¦ì¨î");
                         return true;
                     }
-                    storeObject(addZero(Integer.toHexString(Integer.valueOf(arr[2])),6));//å­—ä¸²è½‰æ•´æ•¸å†è½‰16é€²ä½
+                    storeObject(addZero(Integer.toHexString(Integer.valueOf(arr[2])),6));//¦r¦êÂà¾ã¼Æ¦AÂà16¶i¦ì
                     address += 3;
                 }else if(arr[1].equals("BYTE")&&arr.length==3){
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
                     if(!arr[2].matches("[CX]\\s*\'.*\'$")){
-                        System.out.print("BYTEæ ¼å¼éŒ¯èª¤");
+                        System.out.print("BYTE®æ¦¡¿ù»~");
                         return true;
-                    }else if(arr[2].charAt(0)=='X'){//åˆ¤æ–·æ˜¯X'..'
+                    }else if(arr[2].charAt(0)=='X'){//§PÂ_¬OX'..'
                         if(arr[2].substring(arr[2].indexOf('\'')+1,arr[2].length()-1).contains(" ")){
-                            System.out.print("Xå…§ä¸èƒ½æœ‰ç©ºç™½å­—å…ƒ");
+                            System.out.print("X¤º¤£¯à¦³ªÅ¥Õ¦r¤¸");
                             return true;
                         }else if(arr[2].length()==3){
-                            System.out.print("Xè£¡é¢ä¸å¯ç‚ºç©ºå€¼");
+                            System.out.print("X¸Ì­±¤£¥i¬°ªÅ­È");
                             return true;    
                         }else if(!arr[2].substring(arr[2].indexOf('\'')+1,arr[2].length()-1).matches("[A-Fa-f0-9]+")){
-                            System.out.print(arr[2]+": è«‹ä½¿ç”¨16é€²ä½åˆ¶");
+                            System.out.print(arr[2]+": ½Ğ¨Ï¥Î16¶i¦ì¨î");
                             return true;
                         }
                         arr[2] = arr[2].replaceAll("\\s","");
                         storeObject(arr[2].substring(2,arr[2].length()-1));
-                        if((arr[2].length()-3)%2!=0){//Xå…§éœ€ç‚ºå¶æ•¸å€‹å­—å…ƒ
-                            System.out.print("XæŒ‡æ¨™å…§éœ€ç‚ºå¶æ•¸å€‹å­—å…ƒ");
+                        if((arr[2].length()-3)%2!=0){//X¤º»İ¬°°¸¼Æ­Ó¦r¤¸
+                            System.out.print("X«ü¼Ğ¤º»İ¬°°¸¼Æ­Ó¦r¤¸");
                             return true;
                         }
                         address += (arr[2].length()-3)/2;
-                    }else if(arr[2].charAt(0)=='C'&&arr[2].length()>2){//é‚„æ˜¯C'..'
+                    }else if(arr[2].charAt(0)=='C'&&arr[2].length()>2){//ÁÙ¬OC'..'
                         if(arr[2].length()==3){
-                            System.out.print("Cè£¡é¢ä¸å¯ç‚ºç©ºå€¼");
+                            System.out.print("C¸Ì­±¤£¥i¬°ªÅ­È");
                             return true;    
                         }
                         int s = arr[2].indexOf('\'')+1;
                         storeObject(stringToASCII(arr[2].substring(s,arr[2].length()-1)));
                         address += arr[2].length()-s-1;
                     }
-                }else if(op.search(arr[1])!="false"){//æ˜¯mnemonicï¼Œä¸”éRSUB
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
+                }else if(op.search(arr[1])!="false"){//¬Omnemonic¡A¥B«DRSUB
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
                     if(!arr[1].equals("RSUB")){
-                        if(directOrIndexed(arr,1)==true)return true;//åˆ¤æ–·æ˜¯ç´¢å¼•å®šå€æˆ–ç›´æ¥å®šå€
-                    }else if(arr[1].equals("RSUB")&&arr.length>2){
-                        System.out.print("RSUBå¾Œé¢ä¸èƒ½æœ‰operand");
+                        if(directOrIndexed(arr,1)==true)return true;//§PÂ_¬O¯Á¤Ş©w§}©Îª½±µ©w§}
+                    }else if(arr[1].equals("RSUB")&&arr.length==1){
+                        System.out.print("RSUB«á­±¤£¯à¦³operand");
                         return true;
-                    }
+                    }else if(arr[1].equals("RSUB"))
+                        storeObject("4C0000");
                     address += 3;
-                }else{//éƒ½ä¸ç¬¦åˆï¼Œç¨‹å¼éŒ¯èª¤
-                    if(storeLabel(arr[0])==true)return true;//å­˜Label
-                    System.out.printf(arr[1]+": mnemonicæˆ–directiveéŒ¯èª¤");
+                }else{//³£¤£²Å¦X¡Aµ{¦¡¿ù»~
+                    if(storeLabel(arr[0])==true)return true;//¦sLabel
+                    System.out.printf((arr.length<=2?arr[0]:arr[1])+": mnemonic©Îdirective¿ù»~");
                     return true;
                 }
             }
-        }else{//ç¬¬ä¸€å€‹æ˜¯mnemonic
-            if(arr.length<4&&arr.length>1&&!arr[0].equals("RSUB")){//åˆ¤æ–·éRSUBçš„Mnemonic
-                if((!op.search(arr[1]).equals("false"))||arr[1].equals("BYTE")||arr[1].equals("WORD")||arr[1].equals("RESB")||arr[1].equals("RESW")){//ç¬¬äºŒå€‹ä¹Ÿæ˜¯mnemonic
-                    System.out.print(arr[0]+": ä¸èƒ½å–è·Ÿmnemonicæˆ–assembler directivesç›¸åŒåç¨±");
+        }else{//²Ä¤@­Ó¬Omnemonic
+            if(arr.length<4&&arr.length>1&&!arr[0].equals("RSUB")){//§PÂ_«DRSUBªºMnemonic
+                if((!op.search(arr[1]).equals("false"))||arr[1].equals("BYTE")||arr[1].equals("WORD")||arr[1].equals("RESB")||arr[1].equals("RESW")){//²Ä¤G­Ó¤]¬Omnemonic
+                    System.out.print(arr[0]+": ¤£¯à¨ú¸òmnemonic©Îassembler directives¬Û¦P¦WºÙ");
                     return true;
                 }
-                if(directOrIndexed(arr,0)==true)return true;//åˆ¤æ–·æ˜¯ç´¢å¼•å®šå€æˆ–ç›´æ¥å®šå€
+                if(directOrIndexed(arr,0)==true)return true;//§PÂ_¬O¯Á¤Ş©w§}©Îª½±µ©w§}
             }else if(arr.length==1&&arr[0].equals("RSUB")){
                 storeObject("4C0000");
             }else if(arr[0].equals("RSUB")){
-                System.out.print("RSUB å¾Œé¢ä¸èƒ½æœ‰ operand");
+                System.out.print("RSUB «á­±¤£¯à¦³ operand");
                 return true;
             }else{
-                System.out.printf("ç¨‹å¼æ‡‰ç”±Labelã€mmnemonicè·Ÿoperandçµ„æˆ");
+                System.out.printf("µ{¦¡À³¥ÑLabel¡Bmmnemonic¸òoperand²Õ¦¨");
                 return true;
             }
             address += 3;
         }
         return false;
     }
-    public boolean directOrIndexed(String[] arr,int hasLabel){//åˆ¤æ–·æ˜¯ç´¢å¼•å®šå€æˆ–ç›´æ¥å®šå€
-        if(arr.length==(hasLabel+3)&&arr[arr.length-1].equals("X"))//æ˜¯ç´¢å¼•å®šå€
-            //åˆ¤æ–·æ˜¯å¦æœ‰æ‰¾åˆ°label
+    public boolean directOrIndexed(String[] arr,int hasLabel){//§PÂ_¬O¯Á¤Ş©w§}©Îª½±µ©w§}
+        if(arr.length==(hasLabel+3)&&arr[arr.length-1].equals("X"))//¬O¯Á¤Ş©w§}
+            //§PÂ_¬O§_¦³§ä¨ìlabel
             storeObject(op.search(arr[hasLabel])+(isLabelExit(arr[hasLabel+1],address)?indexedObject(arr[hasLabel+1]):"0000"));
-        else if(arr.length==(hasLabel+2)&&!arr[arr.length-1].equals("X"))//æ˜¯ç›´æ¥å®šå€
-            //åˆ¤æ–·æ˜¯å¦æœ‰æ‰¾åˆ°label
+        else if(arr.length==(hasLabel+2)&&!arr[arr.length-1].equals("X"))//¬Oª½±µ©w§}
+            //§PÂ_¬O§_¦³§ä¨ìlabel
             storeObject(op.search(arr[hasLabel])+(isLabelExit(arr[hasLabel+1],address)?sym.search(arr[hasLabel+1]):"0000"));
         else if(op.search(arr[arr.length-1])!="false"){
-            System.out.print(arr[arr.length-1]+": operandä¸èƒ½è·ŸmnemonicåŒå");
+            System.out.print(arr[arr.length-1]+": operand¤£¯à¸òmnemonic¦P¦W");
             return true;
         }else{
-            System.out.print(arr[arr.length-1]+": indexedéŒ¯èª¤ï¼Œè«‹ç”¨Xä½œç‚ºç´¢å¼•");
+            System.out.print(arr[arr.length-1]+": indexed¿ù»~¡A½Ğ¥ÎX§@¬°¯Á¤Ş");
             return true;
        }
        return false;
     }
-    //ä½ç½®æ˜¯å¦è¶…éFFFF
+    //¦ì¸m¬O§_¶W¹LFFFF
     public boolean overMemory(int location){
         System.out.println(location);
         System.out.println(Integer.parseInt("FFFF",16));
         System.out.println(location-Integer.parseInt("FFFF",16));
         if((location-Integer.parseInt("FFFF",16))>0){
-            System.out.print("è¶…éè¨˜æ†¶é«”ç©ºé–“");
+            System.out.print("¶W¹L°O¾ĞÅéªÅ¶¡");
             return true;
         }else
             return false;
     }
-    //å­˜Label
+    //¦sLabel
     public boolean storeLabel(String label){
-        if(!findLabel(label))//operandæ˜¯å¦å­˜éé€™å€‹label
-            if(sym.insert(label,Integer.toHexString(address))==false)//10é€²ä½è½‰16é€²ä½
-                return true;//å­˜å–å¤±æ•—
-        return false;//å­˜æˆåŠŸ
+        if(!findLabel(label))//operand¬O§_¦s¹L³o­Ólabel
+            if(sym.insert(label,Integer.toHexString(address))==false)//10¶i¦ìÂà16¶i¦ì
+                return true;//¦s¨ú¥¢±Ñ
+        return false;//¦s¦¨¥\
     }
-    //æ‰¾åˆ°operandå®šç¾©çš„label
+    //§ä¨ìoperand©w¸qªºlabel
     public boolean findLabel(String a){
         if(sym.search(a).equals("****")){
             this.thisLine = 0;
@@ -276,58 +284,59 @@ public class Assembler{
                 if(location==null)
                     break;
                 newLine = false;
+                this.thisLine = 0;
                 storeObject("T");
-                storeObject(addZero(location,6));//è¦ä¿®æ”¹çš„ä½å€
-                storeObject("00");//é•·åº¦
-                storeObject(Integer.toHexString(address));//ç¾åœ¨ä½ç½®
+                storeObject(addZero(location,6));//­n­×§ïªº¦ì§}
+                storeObject("00");//ªø«×
+                storeObject(Integer.toHexString(address));//²{¦b¦ì¸m
                 continue;
             }
             newLine = true;
-            while(wrongLabel.indexOf(a)!=-1){//å¦‚æœæ‰¾åˆ°Labelï¼Œå°‡ä½¿ç”¨æ­¤Labelçš„ä½ç½®å¾ç´€éŒ„ä¸­åˆªé™¤
+            while(wrongLabel.indexOf(a)!=-1){//¦pªG§ä¨ìLabel¡A±N¨Ï¥Î¦¹Labelªº¦ì¸m±q¬ö¿ı¤¤§R°£
                 wrongLabel.remove(wrongLabel.indexOf(a)+1);
                 wrongLabel.remove(a);
             }
-            return true;//operandå·²å­˜é
+            return true;//operand¤w¦s¹L
         }else
-            return false;//operandæ²’æœ‰å­˜é
+            return false;//operand¨S¦³¦s¹L
     }
-    //åˆ¤æ–·æ˜¯å¦æœ‰å­˜åœ¨label
+    //§PÂ_¬O§_¦³¦s¦blabel
     public boolean isLabelExit(String operand,int location){
-        if(sym.search(operand).equals("false")||sym.search(operand).equals("****")){//æ²’æœ‰label
+        if(sym.search(operand).equals("false")||sym.search(operand).equals("****")){//¨S¦³label
             if(sym.search(operand).equals("false"))
                 sym.insert(operand,"****");
             sym.storeLabel(operand,Integer.toHexString(location+1));
-            wrongLabel.add(operand);//å°‡Labelå’Œä½ç½®å­˜èµ·ä¾†
+            wrongLabel.add(operand);//±NLabel©M¦ì¸m¦s°_¨Ó
             wrongLabel.add(Integer.toString(j));
-            return false;//æœªå®šç¾©
-        }else{//æœ‰label
-            return true;//å·²å®šç¾©
+            return false;//¥¼©w¸q
+        }else{//¦³label
+            return true;//¤w©w¸q
         }
     }
-    //ç®—ç´¢å¼•å®šå€çš„objectCode
+    //ºâ¯Á¤Ş©w§}ªºobjectCode
     public String indexedObject(String object){
         int a = Integer.parseInt(sym.search(object),16);
         a += Integer.parseInt("8000",16);
-        return Integer.toHexString(a);//10é€²ä½è½‰16é€²ä½
+        return Integer.toHexString(a);//10¶i¦ìÂà16¶i¦ì
     }
-    //å­˜objectCode
+    //¦sobjectCode
     public void storeObject(String object){
         this.thisLine++;
         if(this.thisLine==object_Length||newLine == true){
             objectCode.add("T");
-            objectCode.add(addZero(Integer.toHexString(address),6).toUpperCase());//10é€²ä½è½‰16é€²ä½
+            objectCode.add(addZero(Integer.toHexString(address),6).toUpperCase());//10¶i¦ìÂà16¶i¦ì
             objectCode.add("00");
             this.thisLine = 0;
             this.newLine = false;
         }
         objectCode.add(object.toUpperCase());
     }
-    //è¨ˆç®—æ¯è¡Œé•·åº¦
+    //­pºâ¨C¦æªø«×
     public void countLength(){
         for(int i=0;i<objectCode.size();i++){
-            if(objectCode.get(i)=="T"||objectCode.get(i)=="E"){//è®€åˆ°Tæˆ–Eç®—å‰ä¸€è¡Œçš„é•·åº¦
+            if(objectCode.get(i)=="T"||objectCode.get(i)=="E"){//Åª¨ìT©ÎEºâ«e¤@¦æªºªø«×
                 int sum = 0;
-                if(i!=4){//ç¬¬ä¸€è¡Œä¸ç”¨ç®—
+                if(i!=4){//²Ä¤@¦æ¤£¥Îºâ
                     for(int j=lineHead+1;j<i;j++)
                         sum += objectCode.get(j).length();
                     objectCode.set(lineHead,addZero(Integer.toHexString(sum/2),2).toUpperCase());
@@ -336,7 +345,7 @@ public class Assembler{
             }
         }
     }
-    //å·¦é‚Šè£œ0
+    //¥ªÃä¸É0
     public String addZero(String str,int l){
         while(str.length()<l){
             StringBuffer sb = new StringBuffer();
@@ -345,21 +354,26 @@ public class Assembler{
         }
         return str;
     }
-    //å­—ä¸²è½‰ASCII
+    //¦r¦êÂàASCII
     public String stringToASCII(String s){
         String b = "";
         for(int i=0;i<s.length();i++)
-            b += Integer.toHexString((int)s.charAt(i));//10é€²ä½è½‰16é€²ä½
+            b += Integer.toHexString((int)s.charAt(i));//10¶i¦ìÂà16¶i¦ì
         return b;
     }
-    //å°object program
-    public void printObjectCode(){
+    //¦Lobject program
+    public void printObjectCode() throws IOException{
+        FileWriter fw = new FileWriter("objectCode.txt");
         for(int i=0;i<objectCode.size();i++){
-            if(objectCode.get(i)=="T"||objectCode.get(i)=="E")
+            if(objectCode.get(i)=="T"||objectCode.get(i)=="E"){
                 System.out.println();
+                fw.write("\r\n");
+            }
             System.out.print(" "+objectCode.get(i));
+            fw.write(" "+objectCode.get(i));
         }
         System.out.println();
+        fw.close();
     }
     public static void main(String[] argv)throws IOException{
         Assembler as = new Assembler();
